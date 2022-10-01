@@ -1,4 +1,4 @@
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Dict
 from collections import defaultdict
 
 import torch
@@ -47,17 +47,17 @@ class CTCCharTextEncoder(CharTextEncoder):
             ('', self.EMPTY_TOK): 1.0
         }
         for prob in probs:
-            dp = self._extend_and_merge(dp, prob, self.ind2char)
+            dp = self._extend_and_merge(dp, prob)
             dp = self._cut_beams(dp, beam_size)
 
         hypos: List[Hypothesis] = [Hypothesis(s.strip(), p) for (s, last_char), p in dp.items()]
         return sorted(hypos, key=lambda x: x.prob, reverse=True)
 
-    def _extend_and_merge(self, dp, prob, ind2char):
+    def _extend_and_merge(self, dp: dict, prob: torch.tensor) -> dict:
         new_dp = defaultdict(float)
         for (res, last_char), p in dp.items():
             for i in range(len(prob)):
-                char = ind2char[i]
+                char = self.ind2char[i]
                 if char == last_char:
                     new_dp[(res, last_char)] += p * prob[i]
                 elif char == self.EMPTY_TOK:

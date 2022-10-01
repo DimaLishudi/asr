@@ -98,3 +98,6 @@ class TestDataset(unittest.TestCase):
         else:
             self.assertEqual(length_dim, 0)
             self.assertEqual(training_example["text"], "")
+
+if __name__ == '__main__':
+    unittest.main()

@@ -52,3 +52,7 @@ class TestDataloader(unittest.TestCase):
                 for i, batch in tqdm(enumerate(iter(dl)), total=_TOTAL_ITERATIONS,
                                      desc=f"Iterating over {part}"):
                     if i >= _TOTAL_ITERATIONS: break
+
+
+if __name__ == '__main__':
+    unittest.main()
