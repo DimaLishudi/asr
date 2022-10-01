@@ -1,4 +1,5 @@
 from typing import List, NamedTuple
+from collections import defaultdict
 
 import torch
 
@@ -20,8 +21,17 @@ class CTCCharTextEncoder(CharTextEncoder):
         self.char2ind = {v: k for k, v in self.ind2char.items()}
 
     def ctc_decode(self, inds: List[int]) -> str:
-        # TODO: your code here
-        raise NotImplementedError()
+        # 2nd seminar code
+        last_char = self.EMPTY_TOK
+        res = []
+        for ind in inds:
+            char = self.ind2char[ind]
+            if char == last_char:
+                continue
+            if char != self.EMPTY_TOK:
+                res.append(char)
+            last_char = ind
+        return ''.join(res)
 
     def ctc_beam_search(self, probs: torch.tensor, probs_length,
                         beam_size: int = 100) -> List[Hypothesis]:
@@ -31,7 +41,31 @@ class CTCCharTextEncoder(CharTextEncoder):
         assert len(probs.shape) == 2
         char_length, voc_size = probs.shape
         assert voc_size == len(self.ind2char)
-        hypos: List[Hypothesis] = []
-        # TODO: your code here
-        raise NotImplementedError
+
+        # slightly modified 2nd seminar code
+        dp = {
+            ('', self.EMPTY_TOK): 1.0
+        }
+        for prob in probs:
+            dp = self._extend_and_merge(dp, prob, self.ind2char)
+            dp = self._cut_beams(dp, beam_size)
+
+        hypos: List[Hypothesis] = [Hypothesis(s.strip(), p) for (s, last_char), p in dp.items()]
         return sorted(hypos, key=lambda x: x.prob, reverse=True)
+
+    def _extend_and_merge(self, dp, prob, ind2char):
+        new_dp = defaultdict(float)
+        for (res, last_char), p in dp.items():
+            for i in range(len(prob)):
+                char = ind2char[i]
+                if char == last_char:
+                    new_dp[(res, last_char)] += p * prob[i]
+                elif char == self.EMPTY_TOK:
+                    new_dp[(res, char)] += p * prob[i]
+                else:
+                    new_dp[(res + char, char)] += p * prob[i]
+        return new_dp
+
+    @staticmethod
+    def _cut_beams(self, dp: dict, beam_size: int) -> dict:
+        return dict(list(sorted(dp.items(), key=lambda x: x[1], reverse=True))[:beam_size])
