@@ -54,8 +54,6 @@ class CTCCharTextEncoder(CharTextEncoder):
         dp = {
             ('', self.EMPTY_TOK): 1.0
         }
-        print(probs.shape)
-        print(probs_length)
         for i in range(probs_length-1):
             dp = self._extend_and_merge(dp, probs[i])
             dp = self._cut_beams(dp, beam_size)
