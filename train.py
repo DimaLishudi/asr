@@ -4,6 +4,7 @@ import warnings
 
 import numpy as np
 import torch
+import torchaudio
 
 import hw_asr.loss as module_loss
 import hw_asr.metric as module_metric
@@ -72,6 +73,8 @@ def main(config):
 
 
 if __name__ == "__main__":
+    torchaudio.set_audio_backend('soundfile')
+    print(torch.cuda.is_available())
     args = argparse.ArgumentParser(description="PyTorch Template")
     args.add_argument(
         "-c",

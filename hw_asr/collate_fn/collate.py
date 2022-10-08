@@ -17,7 +17,7 @@ def collate_fn(dataset_items: List[dict]):
     spec_lengths = torch.empty(batch_size, dtype=torch.int32)
     # audio_flag = True if 'audio' in dataset_items[0] else False
     # durations = torch.empty(batch_size)
-    # audio_paths = []
+    audio_paths = []
 
     max_audio_len = 0
 
@@ -26,7 +26,7 @@ def collate_fn(dataset_items: List[dict]):
         text_lengths[i] = d['text_encoded'].shape[1]
         texts.append(d['text'])
         # durations[i] = d['duration']
-        # audio_paths.append(d['audio_path'])
+        audio_paths.append(d['audio_path'])
     # if audio_flag:
     #     for i, d in enumerate(dataset_items):
     #         max_audio_len = max(max_audio_len, d['audio'].shape[1])
@@ -42,10 +42,10 @@ def collate_fn(dataset_items: List[dict]):
         "spectrogram": batch_specs,
         "text": texts,
         "text_encoded": batch_texts,
-        'spectogram_length' : spec_lengths,
-        'text_encoded_length' : text_lengths,
+        'spectrogram_length': spec_lengths,
+        'text_encoded_length': text_lengths,
         # "duration": durations,
-        # "audio_path": audio_paths,
+        "audio_path": audio_paths,
     }
 
     # if audio_flag:

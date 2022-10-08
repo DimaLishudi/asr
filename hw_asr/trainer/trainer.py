@@ -9,6 +9,7 @@ import torch.nn.functional as F
 from torch.nn.utils import clip_grad_norm_
 from torchvision.transforms import ToTensor
 from tqdm import tqdm
+import numpy as np
 
 from hw_asr.base import BaseTrainer
 from hw_asr.base.base_text_encoder import BaseTextEncoder
@@ -209,8 +210,10 @@ class Trainer(BaseTrainer):
             **kwargs,
     ):
         # TODO: implement logging of beam search results
+
         if self.writer is None:
             return
+        probs = torch.exp(log_probs.detach().cpu())
         argmax_inds = log_probs.cpu().argmax(-1).numpy()
         argmax_inds = [
             inds[: int(ind_len)]
@@ -218,21 +221,49 @@ class Trainer(BaseTrainer):
         ]
         argmax_texts_raw = [self.text_encoder.decode(inds) for inds in argmax_inds]
         argmax_texts = [self.text_encoder.ctc_decode(inds) for inds in argmax_inds]
-        tuples = list(zip(argmax_texts, text, argmax_texts_raw, audio_path))
+        batch_beam_hypos = [
+            self.text_encoder.ctc_beam_search(probs[i], log_probs_length[i])
+            for i in range(probs.shape[0])
+        ]
+        tuples = list(zip(batch_beam_hypos, argmax_texts, text, argmax_texts_raw, audio_path))
         shuffle(tuples)
         rows = {}
-        for pred, target, raw_pred, audio_path in tuples[:examples_to_log]:
-            target = BaseTextEncoder.normalize_text(target)
-            wer = calc_wer(target, pred) * 100
-            cer = calc_cer(target, pred) * 100
 
+        # log beam search results here instead of MetricTracker, so we don't need to rerun it
+        beam_pred_wers = []
+        beam_pred_cers = []
+
+        for beam_hypos, argmax_pred, target, raw_pred, audio_path in tuples[:examples_to_log]:
+            # print(beam_hypos)
+            print(beam_hypos[0][0])
+            target = BaseTextEncoder.normalize_text(target)
+            argmax_wer = calc_wer(target, argmax_pred) * 100
+            argmax_cer = calc_cer(target, argmax_pred) * 100
+            beam_wers = np.array([calc_wer(target, hypo[0]) * 100 for hypo in beam_hypos])
+            beam_cers = np.array([calc_cer(target, hypo[0]) * 100 for hypo in beam_hypos])
+            beam_pred_wers.append(beam_wers[0])
+            beam_pred_cers.append(beam_cers[0])
+
+            wer_oracle_ind = beam_wers.argmin()
+            cer_oracle_ind = beam_cers.argmin()
             rows[Path(audio_path).name] = {
                 "target": target,
-                "raw prediction": raw_pred,
-                "predictions": pred,
-                "wer": wer,
-                "cer": cer,
+                "raw argmax prediction": raw_pred,
+                "argmax prediction": argmax_pred,
+                "argmax wer": argmax_wer,
+                "argmax cer": argmax_cer,
+                "beam search prediction": beam_hypos[0][0],
+                "beam search probability": beam_hypos[0][1],
+                "beam search wer": beam_wers[-1],
+                "beam search cer": beam_cers[-1],
+                "beam search oracle prediction": beam_hypos[wer_oracle_ind][0],
+                "beam search oracle probability": beam_hypos[wer_oracle_ind][1],
+                "oracle wer": beam_wers[wer_oracle_ind],
+                "oracle cer": beam_cers[cer_oracle_ind],
             }
+
+        self.writer.add_scalar(f"beam search wer", sum(beam_pred_wers) / len(beam_pred_wers))
+        self.writer.add_scalar(f"beam search wer", sum(beam_pred_cers) / len(beam_pred_cers))
         self.writer.add_table("predictions", pd.DataFrame.from_dict(rows, orient="index"))
 
     def _log_spectrogram(self, spectrogram_batch):
