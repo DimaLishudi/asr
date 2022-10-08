@@ -17,6 +17,8 @@ from hw_asr.logger.utils import plot_spectrogram_to_buf
 from hw_asr.metric.utils import calc_cer, calc_wer
 from hw_asr.utils import inf_loop, MetricTracker
 
+from pyctcdecode import build_ctcdecoder
+
 
 class Trainer(BaseTrainer):
     """
@@ -40,6 +42,11 @@ class Trainer(BaseTrainer):
         super().__init__(model, criterion, metrics, optimizer, config, device)
         self.skip_oom = skip_oom
         self.text_encoder = text_encoder
+        alphabet = []
+        for c in text_encoder.ind2char.values():
+            if c != text_encoder.EMPTY_TOK:
+                alphabet.append(c)
+        self.beam_search_decoder = build_ctcdecoder([''] + text_encoder.alphabet)
         self.config = config
         self.train_dataloader = dataloaders["train"]
         if len_epoch is None:
@@ -116,7 +123,7 @@ class Trainer(BaseTrainer):
                     "learning rate", self.lr_scheduler.get_last_lr()[0]
                 )
                 self._log_predictions(**batch)
-                self._log_spectrogram(batch["spectrogram"])
+                # self._log_spectrogram(batch["spectrogram"])
                 self._log_scalars(self.train_metrics)
                 # we don't want to reset train metrics at the start of every epoch
                 # because we are interested in recent train metrics
@@ -182,7 +189,7 @@ class Trainer(BaseTrainer):
             self.writer.set_step(epoch * self.len_epoch, part)
             self._log_scalars(self.evaluation_metrics)
             self._log_predictions(**batch)
-            self._log_spectrogram(batch["spectrogram"])
+            # self._log_spectrogram(batch["spectrogram"])
 
         # add histogram of model parameters to the tensorboard
         for name, p in self.model.named_parameters():
@@ -210,10 +217,11 @@ class Trainer(BaseTrainer):
             **kwargs,
     ):
         # TODO: implement logging of beam search results
+        # TODO: add beam_width to configs
 
         if self.writer is None:
             return
-        probs = torch.exp(log_probs.detach().cpu())
+        logits = log_probs.detach().cpu().numpy()
         argmax_inds = log_probs.cpu().argmax(-1).numpy()
         argmax_inds = [
             inds[: int(ind_len)]
@@ -222,8 +230,8 @@ class Trainer(BaseTrainer):
         argmax_texts_raw = [self.text_encoder.decode(inds) for inds in argmax_inds]
         argmax_texts = [self.text_encoder.ctc_decode(inds) for inds in argmax_inds]
         batch_beam_hypos = [
-            self.text_encoder.ctc_beam_search(probs[i], log_probs_length[i])
-            for i in range(probs.shape[0])
+            self.beam_search_decoder.decode_beams(logits[i][:log_probs_length[i]], beam_width=100)
+            for i in range(logits.shape[0])
         ]
         tuples = list(zip(batch_beam_hypos, argmax_texts, text, argmax_texts_raw, audio_path))
         shuffle(tuples)
@@ -234,8 +242,6 @@ class Trainer(BaseTrainer):
         beam_pred_cers = []
 
         for beam_hypos, argmax_pred, target, raw_pred, audio_path in tuples[:examples_to_log]:
-            # print(beam_hypos)
-            print(beam_hypos[0][0])
             target = BaseTextEncoder.normalize_text(target)
             argmax_wer = calc_wer(target, argmax_pred) * 100
             argmax_cer = calc_cer(target, argmax_pred) * 100
@@ -253,17 +259,17 @@ class Trainer(BaseTrainer):
                 "argmax wer": argmax_wer,
                 "argmax cer": argmax_cer,
                 "beam search prediction": beam_hypos[0][0],
-                "beam search probability": beam_hypos[0][1],
+                "beam search probability": np.exp(beam_hypos[0][3]),
                 "beam search wer": beam_wers[-1],
                 "beam search cer": beam_cers[-1],
                 "beam search oracle prediction": beam_hypos[wer_oracle_ind][0],
-                "beam search oracle probability": beam_hypos[wer_oracle_ind][1],
+                "beam search oracle probability": np.exp(beam_hypos[wer_oracle_ind][3]),
                 "oracle wer": beam_wers[wer_oracle_ind],
                 "oracle cer": beam_cers[cer_oracle_ind],
             }
 
         self.writer.add_scalar(f"beam search wer", sum(beam_pred_wers) / len(beam_pred_wers))
-        self.writer.add_scalar(f"beam search wer", sum(beam_pred_cers) / len(beam_pred_cers))
+        self.writer.add_scalar(f"beam search cer", sum(beam_pred_cers) / len(beam_pred_cers))
         self.writer.add_table("predictions", pd.DataFrame.from_dict(rows, orient="index"))
 
     def _log_spectrogram(self, spectrogram_batch):
