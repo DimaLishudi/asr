@@ -217,8 +217,7 @@ class Trainer(BaseTrainer):
             *args,
             **kwargs,
     ):
-        # TODO: implement logging of beam search results
-        # TODO: add beam_width to configs
+        # TODO: add beam_width to configs, log audio
 
         if self.writer is None:
             return

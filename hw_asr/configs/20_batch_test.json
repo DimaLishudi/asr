@@ -1,5 +1,5 @@
 {
-  "name": "one_batch_test",
+  "name": "20_batch_test",
   "n_gpu": 1,
   "preprocessing": {
     "sr": 16000,
@@ -15,16 +15,16 @@
     "spectrogram": []
   },
   "arch": {
-    "type": "BaselineModel",
+    "type": "DeepSpeech",
     "args": {
       "n_feats": 128,
-      "fc_hidden": 512
+      "fc_hidden": 1024
     }
   },
   "data": {
     "train": {
       "batch_size": 10,
-      "num_workers": 0,
+      "num_workers": 2,
       "datasets": [
         {
           "type": "LibrispeechDataset",
@@ -32,31 +32,31 @@
             "part": "dev-clean",
             "max_audio_length": 20.0,
             "max_text_length": 200,
-            "limit": 10
+            "limit": 500
           }
         }
       ]
     },
     "val": {
       "batch_size": 10,
-      "num_workers": 0,
+      "num_workers": 2,
       "datasets": [
         {
           "type": "LibrispeechDataset",
           "args": {
-            "part": "dev-clean",
+            "part": "test-clean",
             "max_audio_length": 20.0,
             "max_text_length": 200,
-            "limit": 10
+            "limit": 20
           }
         }
       ]
     }
   },
   "optimizer": {
-    "type": "SGD",
+    "type": "Adam",
     "args": {
-      "lr": 1e-2
+      "lr": 3e-3
     }
   },
   "loss": {
@@ -80,15 +80,15 @@
   "lr_scheduler": {
     "type": "OneCycleLR",
     "args": {
-      "steps_per_epoch": 100,
-      "epochs": 50,
+      "steps_per_epoch": 50,
+      "epochs": 200,
       "anneal_strategy": "cos",
-      "max_lr": 1e-2,
+      "max_lr": 3e-3,
       "pct_start": 0.2
     }
   },
   "trainer": {
-    "epochs": 50,
+    "epochs": 200,
     "save_dir": "saved/",
     "save_period": 5,
     "verbosity": 2,
@@ -96,10 +96,10 @@
     "early_stop": 100,
     "visualize": "wandb",
     "wandb_project": "asr_project",
-    "len_epoch": 100,
+    "len_epoch": 50,
     "grad_norm_clip": 10
   },
   "beam_search": {
-    "ken_lm_path": 'lm_models/3gpruned.arpa'
+    "ken_lm_path": "lm_models/3gpruned.arpa"
   }
 }
