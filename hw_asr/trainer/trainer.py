@@ -17,8 +17,6 @@ from hw_asr.logger.utils import plot_spectrogram_to_buf
 from hw_asr.metric.utils import calc_cer, calc_wer
 from hw_asr.utils import inf_loop, MetricTracker
 
-from pyctcdecode import build_ctcdecoder
-
 
 class Trainer(BaseTrainer):
     """
@@ -35,6 +33,7 @@ class Trainer(BaseTrainer):
             device,
             dataloaders,
             text_encoder,
+            ctc_decoder,
             lr_scheduler=None,
             len_epoch=None,
             skip_oom=True,
@@ -46,7 +45,7 @@ class Trainer(BaseTrainer):
         for c in text_encoder.ind2char.values():
             if c != text_encoder.EMPTY_TOK:
                 alphabet.append(c)
-        self.beam_search_decoder = build_ctcdecoder([''] + text_encoder.alphabet)
+        self.beam_search_decoder = ctc_decoder
         self.config = config
         self.train_dataloader = dataloaders["train"]
         if len_epoch is None:
@@ -143,6 +142,8 @@ class Trainer(BaseTrainer):
         batch = self.move_batch_to_device(batch, self.device)
         if is_train:
             self.optimizer.zero_grad()
+
+
         outputs = self.model(**batch)
         if type(outputs) is dict:
             batch.update(outputs)

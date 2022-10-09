@@ -76,8 +76,10 @@ class CTCCharTextEncoder(CharTextEncoder):
         dp = self._extend_and_merge_final(dp, probs[probs_length-1])
 
         hypos: List[Hypothesis] = [Hypothesis(s, p) for s, p in dp.items()]
-        for s, p in hypos:
-            p *= exp(self.a * self.lm(s, bos=True, eos=True) + self.b * len(s.split()))
+
+        if self.lm is not None:
+            for s, p in hypos:
+                p *= exp(self.a * self.lm(s, bos=True, eos=True) + self.b * len(s.split()))
 
         return sorted(hypos, key=lambda x: x.prob, reverse=True)[:beam_size]
 

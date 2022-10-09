@@ -35,7 +35,7 @@ the workflow.
    python -m unittest discover hw_asr/tests
    ```
 3) Make sure `test.py` works fine and works as expected. You should create files `default_test_config.json` and your
-   installation guide should download your model checpoint and configs in `default_test_model/checkpoint.pth`
+   installation guide should download your model checkpoint and configs in `default_test_model/checkpoint.pth`
    and `default_test_model/config.json`.
    ```shell
    python test.py \

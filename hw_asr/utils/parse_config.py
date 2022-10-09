@@ -13,6 +13,8 @@ from hw_asr.logger import setup_logging
 from hw_asr.text_encoder import CTCCharTextEncoder
 from hw_asr.utils import read_json, write_json, ROOT_PATH
 
+from pyctcdecode import build_ctcdecoder
+
 
 class ConfigParser:
     def __init__(self, config, resume=None, modification=None, run_id=None):
@@ -31,6 +33,7 @@ class ConfigParser:
         self._config = _update_config(config, modification)
         self.resume = resume
         self._text_encoder = None
+        self._ctc_decoder = None
 
         # set save_dir where trained model and log will be saved.
         save_dir = Path(self.config["trainer"]["save_dir"])
@@ -145,6 +148,17 @@ class ConfigParser:
                 self._text_encoder = self.init_obj(self["text_encoder"],
                                                    default_module=text_encoder_module)
         return self._text_encoder
+
+    def get_ctc_decoder(self):
+        if self._ctc_decoder is None:
+            if 'ken_lm_path' in self._config['beam_search']:
+                self._ctc_decoder = build_ctcdecoder(
+                    [''] + self.get_text_encoder().alphabet,
+                    self._config['beam_search']['ken_lm_path'])
+            else:
+                self._ctc_decoder = build_ctcdecoder([''] + self.get_text_encoder().alphabet)
+
+        return self._ctc_decoder
 
     # setting read-only attributes
     @property

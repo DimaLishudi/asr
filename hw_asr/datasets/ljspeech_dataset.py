@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import shutil
-from curses.ascii import isascii
 from pathlib import Path
 
 import torchaudio

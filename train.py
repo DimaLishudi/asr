@@ -29,6 +29,7 @@ def main(config):
 
     # text_encoder
     text_encoder = config.get_text_encoder()
+    ctc_decoder = config.get_ctc_decoder()
 
     # setup data_loader instances
     dataloaders = get_dataloaders(config, text_encoder)
@@ -62,6 +63,7 @@ def main(config):
         metrics,
         optimizer,
         text_encoder=text_encoder,
+        ctc_decoder=ctc_decoder,
         config=config,
         device=device,
         dataloaders=dataloaders,
@@ -96,6 +98,14 @@ if __name__ == "__main__":
         default=None,
         type=str,
         help="indices of GPUs to enable (default: all)",
+    )
+    args.add_argument(
+        "-l",
+        "--kenlm",
+        "--ken_language_model",
+        default=None,
+        type=str,
+        help="path to kenlm language model",
     )
 
     # custom cli options to modify configuration from default values given in json file.

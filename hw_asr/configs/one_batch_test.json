@@ -88,7 +88,7 @@
     }
   },
   "trainer": {
-    "epochs": 10,
+    "epochs": 50,
     "save_dir": "saved/",
     "save_period": 5,
     "verbosity": 2,
@@ -98,5 +98,8 @@
     "wandb_project": "asr_project",
     "len_epoch": 100,
     "grad_norm_clip": 10
+  },
+  "beam_search": {
+    "ken_lm_path": "lm_models/3gpruned.arpa"
   }
 }
