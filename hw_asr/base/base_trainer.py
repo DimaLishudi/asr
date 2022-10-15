@@ -52,7 +52,9 @@ class BaseTrainer:
             config, self.logger, cfg_trainer["visualize"]
         )
 
-        if config.resume is not None:
+        if config.resume_model is not None:
+            self._resume_model_checkpoint(config.resume_model)
+        elif config.resume is not None:
             self._resume_checkpoint(config.resume)
 
     @abstractmethod
@@ -127,7 +129,7 @@ class BaseTrainer:
                     break
 
             if epoch % self.save_period == 0 or best:
-                self._save_checkpoint(epoch, save_best=best, only_best=True)
+                self._save_checkpoint(epoch, save_best=best, only_best=False)
 
     def _save_checkpoint(self, epoch, save_best=False, only_best=False):
         """
@@ -188,4 +190,28 @@ class BaseTrainer:
 
         self.logger.info(
             "Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch)
+        )
+
+    def _resume_model_checkpoint(self, resume_path):
+        """
+        Resume model from saved checkpoint; doesn't change optimizer and scheduler
+        keeps epochs from 1
+
+        :param resume_path: Checkpoint path to be resumed
+        """
+        resume_path = str(resume_path)
+        print(resume_path)
+        self.logger.info("Loading model form checkpoint: {} ...".format(resume_path))
+        checkpoint = torch.load(resume_path, self.device)
+
+        # load architecture params from checkpoint.
+        if checkpoint["config"]["arch"] != self.config["arch"]:
+            self.logger.warning(
+                "Warning: Architecture configuration given in config file is different from that "
+                "of checkpoint. This may yield an exception while state_dict is being loaded."
+            )
+        self.model.load_state_dict(checkpoint["state_dict"])
+
+        self.logger.info(
+            "Checkpoint loaded."
         )

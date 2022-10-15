@@ -41,10 +41,6 @@ class Trainer(BaseTrainer):
         super().__init__(model, criterion, metrics, optimizer, config, device)
         self.skip_oom = skip_oom
         self.text_encoder = text_encoder
-        alphabet = []
-        for c in text_encoder.ind2char.values():
-            if c != text_encoder.EMPTY_TOK:
-                alphabet.append(c)
         self.beam_search_decoder = ctc_decoder
         self.config = config
         self.train_dataloader = dataloaders["train"]
@@ -189,7 +185,7 @@ class Trainer(BaseTrainer):
             self.writer.set_step(epoch * self.len_epoch, part)
             self._log_scalars(self.evaluation_metrics)
             self._log_predictions(**batch)
-            # self._log_spectrogram(batch["spectrogram"])
+            self._log_spectrogram(batch["spectrogram"])
 
         # add histogram of model parameters to the tensorboard
         for name, p in self.model.named_parameters():
@@ -275,6 +271,11 @@ class Trainer(BaseTrainer):
         spectrogram = random.choice(spectrogram_batch.cpu())
         image = PIL.Image.open(plot_spectrogram_to_buf(spectrogram))
         self.writer.add_image("spectrogram", ToTensor()(image))
+
+    # def _log_audio(self, spectrogram_batch):
+    #     spectrogram = random.choice(spectrogram_batch.cpu())
+    #     image = PIL.Image.open(plot_spectrogram_to_buf(spectrogram))
+    #     self.writer.add_image("spectrogram", ToTensor()(image))
 
     @torch.no_grad()
     def get_grad_norm(self, norm_type=2):

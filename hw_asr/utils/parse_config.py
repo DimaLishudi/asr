@@ -17,7 +17,7 @@ from pyctcdecode import build_ctcdecoder
 
 
 class ConfigParser:
-    def __init__(self, config, resume=None, modification=None, run_id=None):
+    def __init__(self, config, resume=None, resume_model=None, modification=None, run_id=None):
         """
         class to parse configuration json file. Handles hyperparameters for training,
         initializations of modules, checkpoint saving and logging module.
@@ -32,6 +32,7 @@ class ConfigParser:
         # load config file and apply modification
         self._config = _update_config(config, modification)
         self.resume = resume
+        self.resume_model = resume_model
         self._text_encoder = None
         self._ctc_decoder = None
 
@@ -68,6 +69,10 @@ class ConfigParser:
 
         if args.device is not None:
             os.environ["CUDA_VISIBLE_DEVICES"] = args.device
+        if args.resume_model is not None:
+            resume_model = Path(args.resume_model)
+        else:
+            resume_model = None
         if args.resume is not None:
             resume = Path(args.resume)
             cfg_fname = resume.parent / "config.json"
@@ -87,7 +92,7 @@ class ConfigParser:
         modification = {
             opt.target: getattr(args, _get_opt_name(opt.flags)) for opt in options
         }
-        return cls(config, resume, modification)
+        return cls(config, resume, resume_model, modification)
 
     @staticmethod
     def init_obj(obj_dict, default_module, *args, **kwargs):
