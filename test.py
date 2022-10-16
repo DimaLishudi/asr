@@ -13,6 +13,7 @@ from hw_asr.trainer import Trainer
 from hw_asr.utils import ROOT_PATH
 from hw_asr.utils.object_loading import get_dataloaders
 from hw_asr.utils.parse_config import ConfigParser
+from hw_asr.base.base_text_encoder import BaseTextEncoder
 
 DEFAULT_CHECKPOINT_PATH = ROOT_PATH / "default_test_model" / "checkpoint.pth"
 
@@ -67,20 +68,20 @@ def main(config, out_file, alpha, beta):
             batch["probs"] = batch["log_probs"].exp().cpu()
             batch["argmax"] = batch["probs"].argmax(-1)
             count += len(batch["text"])
-            print(f'count: {count}')
             for i in range(len(batch["text"])):
+                target = BaseTextEncoder.normalize_text(batch["text"][i])
                 argmax = batch["argmax"][i]
                 argmax = argmax[: int(log_probs_length[i])]
                 best_hypo = ctc_decoder.decode_beams(log_probs[i][:log_probs_length[i]], beam_width=100)[0]
                 results.append(
                     {
-                        "ground_truth": batch["text"][i],
+                        "ground_truth": target,
                         "pred_text_argmax": text_encoder.ctc_decode(argmax.cpu().numpy()),
                         "pred_text_beam_search": best_hypo[0],
                     }
                 )
-                wer += calc_wer(batch["text"][i], best_hypo[0])
-                cer += calc_cer(batch["text"][i], best_hypo[0])
+                wer += calc_wer(target, best_hypo[0])
+                cer += calc_cer(target, best_hypo[0])
 
     wer *= 100 / count
     cer *= 100 / count
