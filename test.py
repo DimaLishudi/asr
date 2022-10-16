@@ -6,6 +6,8 @@ from pathlib import Path
 import torch
 from tqdm import tqdm
 
+from hw_asr.metric.utils import calc_cer, calc_wer
+
 import hw_asr.model as module_model
 from hw_asr.trainer import Trainer
 from hw_asr.utils import ROOT_PATH
@@ -46,6 +48,8 @@ def main(config, out_file, alpha, beta):
 
     results = []
     count = 0
+    wer = 0
+    cer = 0
 
     with torch.no_grad():
         for batch_num, batch in enumerate(tqdm(dataloaders["test"])):
@@ -57,15 +61,16 @@ def main(config, out_file, alpha, beta):
                 batch["logits"] = output
             batch["log_probs"] = torch.log_softmax(batch["logits"], dim=-1)
             log_probs = batch["log_probs"].detach().cpu().numpy()
-            batch["log_probs_length"] = model.transform_input_lengths(
+            log_probs_length = model.transform_input_lengths(
                 batch["spectrogram_length"]
             )
             batch["probs"] = batch["log_probs"].exp().cpu()
             batch["argmax"] = batch["probs"].argmax(-1)
             count += len(batch["text"])
+            print(f'count: {count}')
             for i in range(len(batch["text"])):
                 argmax = batch["argmax"][i]
-                argmax = argmax[: int(batch["log_probs_length"][i])]
+                argmax = argmax[: int(log_probs_length[i])]
                 best_hypo = ctc_decoder.decode_beams(log_probs[i][:log_probs_length[i]], beam_width=100)[0]
                 results.append(
                     {
@@ -74,9 +79,15 @@ def main(config, out_file, alpha, beta):
                         "pred_text_beam_search": best_hypo[0],
                     }
                 )
-            print(0)
+                wer += calc_wer(batch["text"][i], best_hypo[0])
+                cer += calc_cer(batch["text"][i], best_hypo[0])
+
+    wer *= 100 / count
+    cer *= 100 / count
     with Path(out_file).open("w") as f:
         json.dump(results, f, indent=2)
+
+    print(f"test data results: wer = {wer} | cer = {cer}")
 
 
 if __name__ == "__main__":

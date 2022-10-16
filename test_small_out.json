@@ -1,0 +1,27 @@
+[
+  {
+    "ground_truth": "ALL WATERS THAT ON EARTH MOST LIMPID ARE WOULD SEEM TO HAVE WITHIN THEMSELVES SOME MIXTURE COMPARED WITH THAT WHICH NOTHING DOTH CONCEAL",
+    "pred_text_argmax": "all waters thant anearthmost limbid ar would seend to hove with in themselves so mixture compared with that which nothing dot conceal",
+    "pred_text_beam_search": "all waters that an earth most limbed are would seem to have within themselves so mixture compared with that which nothing dot conceal"
+  },
+  {
+    "ground_truth": "YE ARE NEW COMERS AND BECAUSE I SMILE BEGAN SHE PERADVENTURE IN THIS PLACE ELECT TO HUMAN NATURE FOR ITS NEST",
+    "pred_text_argmax": "ye i know comers and becase i smile becanshe per adventure in this place alect to human nature for its nest",
+    "pred_text_beam_search": "ye i newcomers and because i smile he can she peradventure in this place elect to human nature for its nest"
+  },
+  {
+    "ground_truth": "I DO NOT THINK THERE SHONE SO GREAT A LIGHT UNDER THE LIDS OF VENUS WHEN TRANSFIXED BY HER OWN SON BEYOND HIS USUAL CUSTOM",
+    "pred_text_argmax": "i do not think ther showne so greatelight uner the lids ef venis when tans phic wy her own sun beyond his usual custom",
+    "pred_text_beam_search": "i do not think there shone so great a light under the lids of venus when tins pic wi her own son beyond his usual custom"
+  },
+  {
+    "ground_truth": "BUT WITH FULL RAVISHMENT THE HOURS OF PRIME SINGING RECEIVED THEY IN THE MIDST OF LEAVES THAT EVER BORE A BURDEN TO THEIR RHYMES",
+    "pred_text_argmax": "but with full ravishment the hours of prime singing received they in the midst of leaves that ever bor a burden to ther rines",
+    "pred_text_beam_search": "but with full ravishment the hours of prime singing received they in the midst of leaves that ever bore a burden to their rims"
+  },
+  {
+    "ground_truth": "THOU MAKEST ME REMEMBER WHERE AND WHAT PROSERPINA THAT MOMENT WAS WHEN LOST HER MOTHER HER AND SHE HERSELF THE SPRING",
+    "pred_text_argmax": "thou makeaistd me remember where and what prosopienaf that moment was when lost her mother her and she herself the spring",
+    "pred_text_beam_search": "thou makes me remember where and what prosopienaf that moment was when lost her mother her and she herself the spring"
+  }
+]

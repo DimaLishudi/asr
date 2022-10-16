@@ -39,14 +39,14 @@
       ]
     },
     "val": {
-      "batch_size": 20,
+      "batch_size": 50,
       "num_workers": 2,
       "datasets": [
         {
           "type": "LibrispeechDataset",
           "args": {
             "part": "dev-clean",
-            "limit": 1000
+            "limit": 500
           }
         }
       ]

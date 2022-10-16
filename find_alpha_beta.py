@@ -7,7 +7,7 @@ from collections import defaultdict
 import torch
 from tqdm import tqdm
 
-from hw_asr.metric.utils import calc_cer, calc_wer
+from hw_asr.metric.utils import calc_wer
 
 import hw_asr.model as module_model
 from hw_asr.trainer import Trainer
