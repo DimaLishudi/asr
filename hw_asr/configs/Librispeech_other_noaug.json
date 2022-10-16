@@ -18,7 +18,8 @@
     "type": "DeepSpeech",
     "args": {
       "n_feats": 128,
-      "fc_hidden": 2048
+      "fc_hidden": 2048,
+      "depthwise": true
     }
   },
   "data": {
@@ -30,8 +31,9 @@
           "type": "LibrispeechDataset",
           "args": {
             "part": "train-other-500",
-            "max_audio_length": 30.0,
-            "max_text_length": 300
+            "max_audio_length": 25.0,
+            "max_text_length": 250,
+            "limit": 10000
           }
         }
       ]
@@ -44,7 +46,7 @@
           "type": "LibrispeechDataset",
           "args": {
             "part": "dev-clean",
-            "limit": 200
+            "limit": 1000
           }
         }
       ]
@@ -57,7 +59,7 @@
           "type": "LibrispeechDataset",
           "args": {
             "part": "dev-other",
-            "limit": 200
+            "limit": 1000
           }
         }
       ]
@@ -66,7 +68,7 @@
   "optimizer": {
     "type": "AdamW",
     "args": {
-      "lr": 5e-4,
+      "lr": 5e-5,
       "weight_decay": 0.005
     }
   },
@@ -91,15 +93,15 @@
   "lr_scheduler": {
     "type": "OneCycleLR",
     "args": {
-      "steps_per_epoch": 14815,
-      "epochs": 2,
+      "steps_per_epoch": 1000,
+      "epochs": 10,
       "anneal_strategy": "cos",
       "max_lr": 5e-5,
       "pct_start": 0.2
     }
   },
   "trainer": {
-    "epochs": 2,
+    "epochs": 10,
     "save_dir": "saved/",
     "save_period": 1,
     "verbosity": 2,
