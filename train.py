@@ -76,7 +76,6 @@ def main(config):
 
 if __name__ == "__main__":
     torchaudio.set_audio_backend('soundfile')
-    print(torch.cuda.is_available())
     args = argparse.ArgumentParser(description="PyTorch Template")
     args.add_argument(
         "-c",

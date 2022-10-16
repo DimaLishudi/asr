@@ -18,13 +18,13 @@
     "type": "DeepSpeech",
     "args": {
       "n_feats": 128,
-      "fc_hidden": 2048,
-      "depthwise": true
+      "fc_hidden": 1024,
+      "p" : 0.1
     }
   },
   "data": {
     "train": {
-      "batch_size": 10,
+      "batch_size": 12,
       "num_workers": 1,
       "datasets": [
         {
@@ -33,33 +33,33 @@
             "part": "train-other-500",
             "max_audio_length": 25.0,
             "max_text_length": 250,
-            "limit": 10000
+            "limit": 72000
           }
         }
       ]
     },
     "val-clean": {
-      "batch_size": 10,
+      "batch_size": 12,
       "num_workers": 1,
       "datasets": [
         {
           "type": "LibrispeechDataset",
           "args": {
             "part": "dev-clean",
-            "limit": 1000
+            "limit": 2400
           }
         }
       ]
     },
     "val-other": {
-      "batch_size": 10,
+      "batch_size": 12,
       "num_workers": 1,
       "datasets": [
         {
           "type": "LibrispeechDataset",
           "args": {
             "part": "dev-other",
-            "limit": 1000
+            "limit": 2400
           }
         }
       ]
@@ -93,7 +93,7 @@
   "lr_scheduler": {
     "type": "OneCycleLR",
     "args": {
-      "steps_per_epoch": 1000,
+      "steps_per_epoch": 6000,
       "epochs": 10,
       "anneal_strategy": "cos",
       "max_lr": 5e-5,
@@ -105,8 +105,6 @@
     "save_dir": "saved/",
     "save_period": 1,
     "verbosity": 2,
-    "monitor": "min val_loss",
-    "early_stop": 2,
     "visualize": "wandb",
     "wandb_project": "asr_project",
     "grad_norm_clip": 10

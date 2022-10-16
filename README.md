@@ -2,11 +2,16 @@
 
 ## Installation guide
 
-< Write your installation guide here >
+
+
 
 ```shell
+git clone https://github.com/DimaLishudi/asr.git
+cd asr
 pip install -r ./requirements.txt
 ```
+
+Training and inference guide is present in launcher.ipynb
 
 ## Recommended implementation order
 
@@ -20,7 +25,7 @@ the workflow.
 5) Implement missing function to run `train.py` with a baseline model
 6) Write your own model and try to overfit it on a single batch
 7) Implement ctc beam search and add metrics to calculate WER and CER over hypothesis obtained from beam search.
-8) ~~Pain and suffering~~ Implement your own models and train them. You've mastered this template when you can tune your
+    8) ~~Pain and suffering~~ Implement your own models and train them. You've mastered this template when you can tune your
    experimental setup just by tuning `configs.json` file and running `train.py`
 9) Don't forget to write a report about your work
 10) Get hired by Google the next day

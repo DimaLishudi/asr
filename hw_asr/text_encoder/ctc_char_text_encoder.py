@@ -59,7 +59,6 @@ class CTCCharTextEncoder(CharTextEncoder):
         """
         Performs beam search and returns a list of pairs (hypothesis, hypothesis probability).
         """
-        # TODO: test beam_search with lm
         assert len(probs.shape) == 2
         char_length, voc_size = probs.shape
         assert voc_size == len(self.ind2char)
@@ -89,7 +88,7 @@ class CTCCharTextEncoder(CharTextEncoder):
             for i in range(len(prob)):
                 char = self.ind2char[i]
                 if char == last_char or char == self.EMPTY_TOK:
-                    new_dp[(res, char)] += p + prob[i]
+                    new_dp[(res, char)] += p * prob[i]
                 else:
                     new_dp[(res + char, char)] += p * prob[i]
         return new_dp
@@ -114,3 +113,9 @@ class CTCCharTextEncoder(CharTextEncoder):
 
     def lm_rescore_prob(self, x: Tuple[Tuple[str, str], float]):
         return x[1] * exp(self.a * self.lm(x[0][0], bos=True, eos=True) + self.b * len(x[0][0].split()))
+
+    def reset_params(self, alpha=None, beta=None):
+        if alpha is not None:
+            self.a = alpha
+        if beta is not None:
+            self.b = beta

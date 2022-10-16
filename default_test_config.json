@@ -1,0 +1,114 @@
+{
+  "name": "no_aug_train_other",
+  "n_gpu": 1,
+  "preprocessing": {
+    "sr": 16000,
+    "spectrogram": {
+      "type": "MelSpectrogram",
+      "args": {
+      }
+    },
+    "log_spec" : true
+  },
+  "augmentations": {
+    "wave": [],
+    "spectrogram": []
+  },
+  "arch": {
+    "type": "DeepSpeech",
+    "args": {
+      "n_feats": 128,
+      "fc_hidden": 1024,
+      "p" : 0.1
+    }
+  },
+  "data": {
+    "train": {
+      "batch_size": 20,
+      "num_workers": 2,
+      "datasets": [
+        {
+          "type": "LibrispeechDataset",
+          "args": {
+            "part": "train-other-500",
+            "max_audio_length": 25.0,
+            "max_text_length": 250,
+            "limit": 72000
+          }
+        }
+      ]
+    },
+    "val": {
+      "batch_size": 20,
+      "num_workers": 2,
+      "datasets": [
+        {
+          "type": "LibrispeechDataset",
+          "args": {
+            "part": "dev-clean",
+            "limit": 1000
+          }
+        }
+      ]
+    },
+    "test": {
+      "batch_size": 20,
+      "num_workers": 2,
+      "datasets": [
+        {
+          "type": "LibrispeechDataset",
+          "args": {
+            "part": "test-clean"
+          }
+        }
+      ]
+    }
+  },
+  "optimizer": {
+    "type": "AdamW",
+    "args": {
+      "lr": 5e-5,
+      "weight_decay": 0.005
+    }
+  },
+  "loss": {
+    "type": "CTCLoss",
+    "args": {}
+  },
+  "metrics": [
+    {
+      "type": "ArgmaxWERMetric",
+      "args": {
+        "name": "WER (argmax)"
+      }
+    },
+    {
+      "type": "ArgmaxCERMetric",
+      "args": {
+        "name": "CER (argmax)"
+      }
+    }
+  ],
+  "lr_scheduler": {
+    "type": "OneCycleLR",
+    "args": {
+      "steps_per_epoch": 6000,
+      "epochs": 10,
+      "anneal_strategy": "cos",
+      "max_lr": 5e-5,
+      "pct_start": 0.2
+    }
+  },
+  "trainer": {
+    "epochs": 10,
+    "save_dir": "saved/",
+    "save_period": 1,
+    "verbosity": 2,
+    "visualize": "wandb",
+    "wandb_project": "asr_project",
+    "grad_norm_clip": 10
+  },
+  "beam_search": {
+    "ken_lm_path": "lm_models/3gpruned.arpa"
+  }
+}

@@ -15,7 +15,7 @@ from hw_asr.utils.parse_config import ConfigParser
 DEFAULT_CHECKPOINT_PATH = ROOT_PATH / "default_test_model" / "checkpoint.pth"
 
 
-def main(config, out_file):
+def main(config, out_file, alpha, beta):
     logger = config.get_logger("test")
 
     # define cpu or gpu if possible
@@ -23,6 +23,8 @@ def main(config, out_file):
 
     # text_encoder
     text_encoder = config.get_text_encoder()
+    ctc_decoder = config.get_ctc_decoder()
+    ctc_decoder.reset_params(alpha=alpha, beta=beta) # override alpha, beta
 
     # setup data_loader instances
     dataloaders = get_dataloaders(config, text_encoder)
@@ -43,6 +45,7 @@ def main(config, out_file):
     model.eval()
 
     results = []
+    count = 0
 
     with torch.no_grad():
         for batch_num, batch in enumerate(tqdm(dataloaders["test"])):
@@ -53,23 +56,25 @@ def main(config, out_file):
             else:
                 batch["logits"] = output
             batch["log_probs"] = torch.log_softmax(batch["logits"], dim=-1)
+            log_probs = batch["log_probs"].detach().cpu().numpy()
             batch["log_probs_length"] = model.transform_input_lengths(
                 batch["spectrogram_length"]
             )
             batch["probs"] = batch["log_probs"].exp().cpu()
             batch["argmax"] = batch["probs"].argmax(-1)
+            count += len(batch["text"])
             for i in range(len(batch["text"])):
                 argmax = batch["argmax"][i]
                 argmax = argmax[: int(batch["log_probs_length"][i])]
+                best_hypo = ctc_decoder.decode_beams(log_probs[i][:log_probs_length[i]], beam_width=100)[0]
                 results.append(
                     {
-                        "ground_trurh": batch["text"][i],
+                        "ground_truth": batch["text"][i],
                         "pred_text_argmax": text_encoder.ctc_decode(argmax.cpu().numpy()),
-                        "pred_text_beam_search": text_encoder.ctc_beam_search(
-                            batch["probs"][i], batch["log_probs_length"][i], beam_size=100
-                        )[:10],
+                        "pred_text_beam_search": best_hypo[0],
                     }
                 )
+            print(0)
     with Path(out_file).open("w") as f:
         json.dump(results, f, indent=2)
 
@@ -126,6 +131,19 @@ if __name__ == "__main__":
         help="Number of workers for test dataloader",
     )
 
+    args.add_argument(
+        "--alpha",
+        default=1.0,
+        type=float,
+        help="list of possible alpha hyperparameters",
+    )
+    args.add_argument(
+        "--beta",
+        default=1.5,
+        type=float,
+        help="list of possible beta hyperparameters",
+    )
+
     args = args.parse_args()
 
     # set GPUs
@@ -169,4 +187,4 @@ if __name__ == "__main__":
     config["data"]["test"]["batch_size"] = args.batch_size
     config["data"]["test"]["n_jobs"] = args.jobs
 
-    main(config, args.output)
+    main(config, args.output, args.alpha, args.beta)
