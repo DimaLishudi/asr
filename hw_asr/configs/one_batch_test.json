@@ -100,6 +100,6 @@
     "grad_norm_clip": 10
   },
   "beam_search": {
-    "ken_lm_path": "lm_models/3gpruned.arpa"
+    "ken_lm_path": "3gpruned.arpa"
   }
 }
